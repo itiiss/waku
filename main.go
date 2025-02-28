@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"webFramework/waku"
@@ -9,16 +8,21 @@ import (
 
 func main() {
 	r := waku.NewEngine()
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "URL.Path = %q\n", r.URL.Path)
+
+	r.Get("/", func(c *waku.Context) {
+		c.HTML(http.StatusOK, "<h1>Hello Waku</h1>")
+	})
+	r.Get("/hello", func(c *waku.Context) {
+		c.String(http.StatusOK, "hello %s, you're at %s\n", c.Query("name"), c.Path)
 	})
 
-	r.Get("/hello", func(w http.ResponseWriter, r *http.Request) {
-		for k, v := range r.Header {
-			fmt.Fprintf(w, "Header[%q] = %q\n", k, v)
-		}
+	r.Post("/login", func(c *waku.Context) {
+		c.JSON(http.StatusOK, waku.H{
+			"username": c.PostForm("username"),
+			"password": c.PostForm("password"),
+		})
 	})
 
-	log.Fatal(r.Run(":8000"))
+	log.Fatal(r.Run(":9999"))
 
 }

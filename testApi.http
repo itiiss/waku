@@ -1,6 +1,10 @@
-### GET request to example server
-GET http://localhost:8080/hello
-
 
 ###
-GET http://localhost:8080/
+POST http://localhost:9999/login
+Content-Type: application/json
+
+{
+  "username": "name",
+  "password": 1234
+}
+
