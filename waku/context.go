@@ -7,11 +7,19 @@ import (
 )
 
 type Context struct {
-	Writer     http.ResponseWriter
-	Request    *http.Request
-	Path       string
-	Method     string
+	// origin context
+	Writer  http.ResponseWriter
+	Request *http.Request
+	// request info
+	Path   string
+	Method string
+	Params map[string]string
+	// response info
 	StatusCode int
+}
+
+func (c *Context) Param(key string) string {
+	return c.Params[key]
 }
 
 func NewContext(w http.ResponseWriter, r *http.Request) *Context {
@@ -46,7 +54,6 @@ func (c *Context) PostJSON(dest T) error {
 	}
 	// 解析 JSON 请求体
 	err := json.NewDecoder(c.Request.Body).Decode(dest)
-	fmt.Println("dest:", dest)
 	if err != nil {
 		return err
 	}

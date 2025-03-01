@@ -18,11 +18,11 @@ func NewEngine() *Engine {
 }
 
 func (engine *Engine) Get(routePattern string, handleFunc handleFunc) {
-	engine.AddRoute(http.MethodGet, routePattern, handleFunc)
+	engine.router.AddRoute(http.MethodGet, routePattern, handleFunc)
 }
 
 func (engine *Engine) Post(routePattern string, handleFunc handleFunc) {
-	engine.AddRoute(http.MethodPost, routePattern, handleFunc)
+	engine.router.AddRoute(http.MethodPost, routePattern, handleFunc)
 }
 
 // Run 启动serve监听addr端口
