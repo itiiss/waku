@@ -1,7 +1,7 @@
 package waku
 
 import (
-	"fmt"
+	"log"
 	"strings"
 )
 
@@ -45,8 +45,7 @@ func (n *node) insert(pattern string, parts []string, height int) {
 	part := parts[height]
 	child := n.matchChild(part)
 
-	fmt.Printf("insert pattern: %s,part: %s, height: %v", pattern, part, height)
-	fmt.Println()
+	log.Printf("insert pattern: %s,part: %s, height: %v", pattern, part, height)
 
 	//未找到匹配节点，在children中添加一个新节点
 	if child == nil {

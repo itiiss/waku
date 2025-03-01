@@ -76,9 +76,11 @@ func (r *Router) getRoute(method, path string) (*node, map[string]string) {
 func (r *Router) handle(c *Context) {
 
 	node, params := r.getRoute(c.Method, c.Path)
+
 	if node != nil {
 		c.Params = params
-		key := GenerateKey(c.Method, c.Path)
+		// node.pattern将动态路由path的:id 换成具体 123
+		key := GenerateKey(c.Method, node.pattern)
 		handleFunc := r.handlers[key]
 		handleFunc(c)
 	} else {
