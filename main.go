@@ -22,6 +22,7 @@ func FormatAsDate(t time.Time) string {
 func main() {
 	r := waku.NewEngine()
 	r.Use(waku.Logger())
+	r.Use(waku.Recover())
 
 	// 设置渲染函数
 	r.SetFuncMap(template.FuncMap{
@@ -49,6 +50,12 @@ func main() {
 			"title": "waku",
 			"now":   time.Date(2019, 8, 17, 0, 0, 0, 0, time.UTC),
 		})
+	})
+
+	// panic path
+	r.Get("/panic", func(c *waku.Context) {
+		names := []string{"1"}
+		c.String(http.StatusOK, names[100])
 	})
 
 	log.Fatal(r.Run(":9999"))

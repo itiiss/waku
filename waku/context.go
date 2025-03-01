@@ -117,7 +117,12 @@ func (c *Context) HTML(code int, name string, data interface{}) {
 	if err != nil {
 		http.Error(c.Writer, err.Error(), 500)
 	}
-	
+}
+
+func (c *Context) Fail(code int, err string) {
+	// index 直接指向最后一个业务handler
+	c.index = len(c.handlers)
+	c.JSON(code, H{"message": err})
 }
 
 // Data return data blob as result
