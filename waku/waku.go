@@ -2,8 +2,10 @@ package waku
 
 import (
 	"fmt"
+	"html/template"
 	"log"
 	"net/http"
+	"path"
 	"strings"
 )
 
@@ -21,6 +23,9 @@ type Engine struct {
 	router       *Router
 	*RouterGroup // embedding RouterGroup  into Engine
 	groups       []*RouterGroup
+	// for html render
+	htmlTemplate *template.Template
+	funcMap      template.FuncMap
 }
 
 // NewEngine 构造函数
@@ -33,6 +38,16 @@ func NewEngine() *Engine {
 	// 将根group 初始化进groups slice中
 	engine.groups = []*RouterGroup{engine.RouterGroup}
 	return engine
+}
+
+// SetFuncMap  自定义的模版渲染函数
+func (engine *Engine) SetFuncMap(funcMap template.FuncMap) {
+	engine.funcMap = funcMap
+}
+
+// LoadHTMLGlob 组合 模版 + 自定义的模版渲染函数
+func (engine *Engine) LoadHTMLGlob(pattern string) {
+	engine.htmlTemplate = template.Must(template.New("").Funcs(engine.funcMap).ParseGlob(pattern))
 }
 
 // AddGroup 添加新的Group到engine中
@@ -81,6 +96,32 @@ func (group *RouterGroup) Use(middleware ...handleFunc) {
 	group.middleware = append(group.middleware, middleware...)
 }
 
+func (group *RouterGroup) createStaticHandler(relativePath string, fs http.FileSystem) handleFunc {
+	// 对于静态文件的path，拼上group的prefix得到绝对路径
+	absolutePath := path.Join(group.prefix, relativePath)
+	// 将文件绝对路径和根路径拼成最终路径
+	fileServer := http.StripPrefix(absolutePath, http.FileServer(fs))
+	return func(c *Context) {
+		file := c.Param("filepath")
+		_, err := fs.Open(file)
+
+		if err != nil {
+			c.Status(http.StatusNotFound)
+			return
+		}
+		fileServer.ServeHTTP(c.Writer, c.Request)
+	}
+}
+
+func (group *RouterGroup) Static(relativePath string, root string) {
+	// 通过最终路径，得到一个返回该路径文件的 handler
+	handler := group.createStaticHandler(relativePath, http.Dir(root))
+	// 得到该文件的相对路径作为 key
+	urlPattern := path.Join(relativePath, "/*filepath")
+	// 注册进路由表中
+	group.Get(urlPattern, handler)
+}
+
 // 通过req和res构建 context，handle函数再解析context获取信息，找到对应的handleFunc处理
 func (engine *Engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	var middlewares []handleFunc
@@ -92,5 +133,6 @@ func (engine *Engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 	c := NewContext(w, req)
 	c.handlers = middlewares
+	c.engine = engine
 	engine.router.handle(c)
 }

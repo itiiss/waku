@@ -19,6 +19,8 @@ type Context struct {
 	// middleware
 	handlers []handleFunc
 	index    int
+	// engine pointer
+	engine *Engine
 }
 
 func (c *Context) Param(key string) string {
@@ -108,10 +110,14 @@ func (c *Context) JSON(code int, obj interface{}) {
 }
 
 // HTML return html string template as result
-func (c *Context) HTML(code int, html string) {
+func (c *Context) HTML(code int, name string, data interface{}) {
 	c.SetHeader("Content-Type", "text/html")
 	c.Status(code)
-	c.Writer.Write([]byte(html))
+	err := c.engine.htmlTemplate.ExecuteTemplate(c.Writer, name, data)
+	if err != nil {
+		http.Error(c.Writer, err.Error(), 500)
+	}
+	
 }
 
 // Data return data blob as result
