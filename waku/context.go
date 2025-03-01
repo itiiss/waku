@@ -16,6 +16,9 @@ type Context struct {
 	Params map[string]string
 	// response info
 	StatusCode int
+	// middleware
+	handlers []handleFunc
+	index    int
 }
 
 func (c *Context) Param(key string) string {
@@ -28,7 +31,7 @@ func NewContext(w http.ResponseWriter, r *http.Request) *Context {
 		Request: r,
 		Path:    r.URL.Path,
 		Method:  r.Method,
-	}
+		index:   -1}
 }
 
 type H map[string]interface{}
@@ -36,6 +39,15 @@ type H map[string]interface{}
 type T struct {
 	username string
 	password string
+}
+
+func (c *Context) Next() {
+	c.index++
+	s := len(c.handlers)
+	// 调用当前idx到len的所有handlers
+	for ; c.index < s; c.index++ {
+		c.handlers[c.index](c)
+	}
 }
 
 // PostForm

@@ -82,8 +82,13 @@ func (r *Router) handle(c *Context) {
 		// node.pattern将动态路由path的:id 换成具体 123
 		key := GenerateKey(c.Method, node.pattern)
 		handleFunc := r.handlers[key]
-		handleFunc(c)
+		// 将业务handler放在middlewares的最后
+		c.handlers = append(c.handlers, handleFunc)
 	} else {
-		c.String(http.StatusNotFound, "404 page not found", c.Path)
+		c.handlers = append(c.handlers, func(c *Context) {
+			c.String(http.StatusNotFound, "404 page not found", c.Path)
+		})
 	}
+	// 从头开始执行middlewares中的func
+	c.Next()
 }

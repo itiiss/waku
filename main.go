@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"time"
 	"webFramework/waku"
 )
 
@@ -12,6 +13,8 @@ func main() {
 	r.Get("/index", func(c *waku.Context) {
 		c.HTML(http.StatusOK, "<h1>Index Page</h1>")
 	})
+	r.Use(waku.Logger())
+
 	v1 := r.NewGroup("/v1")
 	{
 		v1.Get("/", func(c *waku.Context) {
@@ -22,7 +25,12 @@ func main() {
 			c.String(http.StatusOK, "hello %s, you're at %s\n", c.Query("name"), c.Path)
 		})
 	}
+
 	v2 := r.NewGroup("/v2")
+	v2.Use(func(c *waku.Context) {
+		t := time.Now()
+		log.Printf("[%d] %s in %v for group v2", c.StatusCode, c.Request.RequestURI, time.Since(t))
+	})
 	{
 		v2.Get("/hello/:name", func(c *waku.Context) {
 

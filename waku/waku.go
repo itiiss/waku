@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 )
 
 type handleFunc func(c *Context)
@@ -75,8 +76,21 @@ func (engine *Engine) Run(addr string) error {
 	return http.ListenAndServe(addr, engine)
 }
 
+// Use 注册middleware
+func (group *RouterGroup) Use(middleware ...handleFunc) {
+	group.middleware = append(group.middleware, middleware...)
+}
+
 // 通过req和res构建 context，handle函数再解析context获取信息，找到对应的handleFunc处理
 func (engine *Engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	var middlewares []handleFunc
+	// 取得注册在group上的middlewares函数
+	for _, group := range engine.groups {
+		if strings.HasPrefix(req.URL.Path, group.prefix) {
+			middlewares = append(middlewares, group.middleware...)
+		}
+	}
 	c := NewContext(w, req)
+	c.handlers = middlewares
 	engine.router.handle(c)
 }
